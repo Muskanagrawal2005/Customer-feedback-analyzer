@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Analysis Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        .feedback-item {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .feedback-item:hover {
+            transform: translateY(-2px);
+        }
+        .feedback-timestamp {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        .chart-container {
+            margin: 2rem 0;
+            padding: 1rem;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            height: 400px;
+            position: relative;
+        }
+        .overall-experience {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .sentiment-score {
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: 8px;
+            background-color: #e9ecef;
+        }
+        .feedback-stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 1rem 0;
+            padding: 1rem;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .feedback-list {
+            margin-top: 2rem;
+        }
+        .feedback-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .sentiment-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .sentiment-positive {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .sentiment-negative {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .sentiment-neutral {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .filter-button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .filter-button.active {
+            transform: scale(1.05);
+        }
+        .filter-button.all {
+            background-color: #007bff;
+            color: white;
+        }
+        .filter-button.positive {
+            background-color: #28a745;
+            color: white;
+        }
+        .filter-button.negative {
+            background-color: #dc3545;
+            color: white;
+        }
+        .filter-button.neutral {
+            background-color: #6c757d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="dashboard-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Feedback Analysis Dashboard</h1>
+                <a href="/" class="btn btn-primary">Submit New Feedback</a>
+            </div>
+
+            <div class="overall-experience" id="overallExperience"></div>
+            <div class="sentiment-score" id="averageSentimentScore"></div>
+
+            <div class="feedback-stats">
+                <div class="stat-item">
+                    <div class="stat-value text-primary" id="totalFeedback">0</div>
+                    <div class="stat-label">Total Feedback</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value text-success" id="positiveCount">0</div>
+                    <div class="stat-label">Positive</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value text-danger" id="negativeCount">0</div>
+                    <div class="stat-label">Negative</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value text-secondary" id="neutralCount">0</div>
+                    <div class="stat-label">Neutral</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="sentimentChart"></canvas>
+            </div>
+
+            <div class="feedback-list">
+                <div class="feedback-header">
+                    <h3>All Feedback</h3>
+                    <div class="filter-buttons">
+                        <button class="filter-button all active" onclick="filterFeedbacks('all')">All</button>
+                        <button class="filter-button positive" onclick="filterFeedbacks('Positive')">Positive</button>
+                        <button class="filter-button negative" onclick="filterFeedbacks('Negative')">Negative</button>
+                        <button class="filter-button neutral" onclick="filterFeedbacks('Neutral')">Neutral</button>
+                    </div>
+                </div>
+                <div id="feedbackList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sentimentChart;
+        let allFeedbacks = [];
+
+        async function loadDashboardData() {
+            try {
+                console.log('Fetching dashboard data...');
+                const [summaryResponse, feedbackResponse] = await Promise.all([
+                    fetch('/get-summary'),
+                    fetch('/get-all-feedback')
+                ]);
+                
+                if (!summaryResponse.ok) {
+                    throw new Error(`Summary response error: ${summaryResponse.status}`);
+                }
+                
+                if (!feedbackResponse.ok) {
+                    throw new Error(`Feedback response error: ${feedbackResponse.status}`);
+                }
+
+                const summaryData = await summaryResponse.json();
+                console.log('Received summary data:', summaryData);
+                
+                const feedbackData = await feedbackResponse.json();
+                console.log('Received feedback data:', feedbackData);
+                
+                allFeedbacks = feedbackData.feedbacks;
+                
+                // Call update functions
+                updateSummary(summaryData);
+                updateOverallExperience(summaryData);
+                updateChart(summaryData);
+                updateFeedbackList(allFeedbacks);
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                // Show error message to user
+                // document.getElementById('overallExperience').textContent = 'Error loading data. Please refresh the page.';
+            }
+        }
+
+        function updateSummary(data) {
+            try {
+                console.log('Updating summary with data:', data);
+                
+                // Check if data exists
+                if (!data) {
+                    console.error('No data provided to updateSummary');
+                    return;
+                }
+
+                // Update total feedback
+                const totalFeedbackElement = document.getElementById('totalFeedback');
+                if (!totalFeedbackElement) {
+                    console.error('totalFeedback element not found');
+                    return;
+                }
+                totalFeedbackElement.textContent = data.total_feedback || 0;
+
+                // Update sentiment counts
+                const sentimentCounts = data.sentiment_counts || {};
+                const positiveCountElement = document.getElementById('positiveCount');
+                const negativeCountElement = document.getElementById('negativeCount');
+                const neutralCountElement = document.getElementById('neutralCount');
+
+                if (positiveCountElement) positiveCountElement.textContent = sentimentCounts.Positive || 0;
+                if (negativeCountElement) negativeCountElement.textContent = sentimentCounts.Negative || 0;
+                if (neutralCountElement) neutralCountElement.textContent = sentimentCounts.Neutral || 0;
+
+                // Update average sentiment score
+                const averageSentimentScoreElement = document.getElementById('averageSentimentScore');
+                if (averageSentimentScoreElement) {
+                    const avgScore = parseFloat(data.average_sentiment_score || 0).toFixed(2);
+                    averageSentimentScoreElement.textContent = `Average Sentiment Score: ${avgScore}`;
+                }
+
+                console.log('Summary update completed successfully');
+            } catch (error) {
+                console.error('Error in updateSummary:', error);
+            }
+        }
+
+        function updateOverallExperience(data) {
+            const total = data.total_feedback;
+            const positive = data.sentiment_counts.Positive || 0;
+            const percentage = (positive / total) * 100;
+            
+            let experience = '';
+            if (total == 0){
+                experience = 'No Feedback Yet';
+                document.getElementById('overallExperience').className = 'overall-experience bg-warning text-dark';
+            }
+            else if (percentage >= 70) {
+                experience = 'Excellent Customer Experience';
+                document.getElementById('overallExperience').className = 'overall-experience bg-success text-white';
+            } else if (percentage >= 50) {
+                experience = 'Good Customer Experience';
+                document.getElementById('overallExperience').className = 'overall-experience bg-primary text-white';
+            } else if (percentage >= 30) {
+                experience = 'Average Customer Experience';
+                document.getElementById('overallExperience').className = 'overall-experience bg-warning text-dark';
+            } 
+            else {
+                experience = 'Needs Improvement';
+                document.getElementById('overallExperience').className = 'overall-experience bg-danger text-white';
+            }
+            
+            document.getElementById('overallExperience').textContent = experience;
+        }
+
+        function updateChart(data) {
+            const ctx = document.getElementById('sentimentChart').getContext('2d');
+            
+            if (sentimentChart) {
+                sentimentChart.destroy();
+            }
+
+            const total = data.total_feedback;
+            const positive = data.sentiment_counts.Positive || 0;
+            const negative = data.sentiment_counts.Negative || 0;
+            const neutral = data.sentiment_counts.Neutral || 0;
+
+            const positivePercentage = total > 0 ? ((positive / total) * 100).toFixed(1) : 0;
+            const negativePercentage = total > 0 ? ((negative / total) * 100).toFixed(1) : 0;
+            const neutralPercentage = total > 0 ? ((neutral / total) * 100).toFixed(1) : 0;
+
+            sentimentChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: [
+                        `Positive (${positivePercentage}%)`,
+                        `Negative (${negativePercentage}%)`,
+                        `Neutral (${neutralPercentage}%)`
+                    ],
+                    datasets: [{
+                        data: [positive, negative, neutral],
+                        backgroundColor: ['#28a745', '#dc3545', '#6c757d'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    return `${label}: ${value} feedbacks`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function filterFeedbacks(sentiment) {
+            console.log('Filtering feedbacks for sentiment:', sentiment);
+            
+            // Update active button state
+            document.querySelectorAll('.filter-button').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.classList.contains(sentiment.toLowerCase()) || 
+                    (sentiment === 'all' && btn.classList.contains('all'))) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Filter feedbacks
+            const filteredFeedbacks = sentiment === 'all' 
+                ? allFeedbacks 
+                : allFeedbacks.filter(feedback => feedback.sentiment === sentiment);
+            
+            console.log('Filtered feedbacks:', filteredFeedbacks.length);
+            
+            // Update the feedback list
+            const feedbackList = document.getElementById('feedbackList');
+            feedbackList.innerHTML = '';
+            
+            if (filteredFeedbacks.length === 0) {
+                feedbackList.innerHTML = '<div class="text-center text-muted">No feedback found for this sentiment</div>';
+                return;
+            }
+            
+            filteredFeedbacks.forEach(feedback => {
+                const feedbackItem = document.createElement('div');
+                feedbackItem.className = 'feedback-item';
+                
+                const sentimentClass = feedback.sentiment === 'Positive' ? 'sentiment-positive' :
+                                     feedback.sentiment === 'Negative' ? 'sentiment-negative' : 'sentiment-neutral';
+                
+                feedbackItem.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="sentiment-badge ${sentimentClass}">${feedback.sentiment}</span>
+                        <span class="feedback-timestamp">${new Date(feedback.timestamp).toLocaleString()}</span>
+                    </div>
+                    <p class="mt-2 mb-0">${feedback.text}</p>
+                    <div class="mt-2">
+                        <small class="text-muted">Sentiment Score: ${feedback.sentimentScore.toFixed(2)}</small>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">Topics: ${feedback.topics.join(', ') || 'No topics identified'}</small>
+                    </div>
+                `;
+                feedbackList.appendChild(feedbackItem);
+            });
+        }
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
+        });
+    </script>
+</body>
+</html> 
