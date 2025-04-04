@@ -7,7 +7,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 
 // Initialize Hugging Face client
 const client = new HfInference(process.env.HUGGINGFACE_API_KEY);
