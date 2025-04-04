@@ -7,36 +7,45 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
         .dashboard-container {
             max-width: 1200px;
             margin: 2rem auto;
             padding: 2rem;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 15px rgba(155, 89, 182, 0.2);
             border-radius: 8px;
+            background-color: #2d2d2d;
+            border: 1px solid #9b59b6;
         }
         .feedback-item {
             padding: 1rem;
             margin-bottom: 1rem;
             border-radius: 8px;
-            background-color: #fff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            background-color: #3d3d3d;
+            box-shadow: 0 2px 4px rgba(155, 89, 182, 0.1);
             transition: transform 0.2s;
+            border-left: 4px solid #9b59b6;
         }
         .feedback-item:hover {
             transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(155, 89, 182, 0.2);
         }
         .feedback-timestamp {
             font-size: 0.8rem;
-            color: #6c757d;
+            color: #ff7043;
         }
         .chart-container {
             margin: 2rem 0;
             padding: 1rem;
-            background-color: #fff;
+            background-color: #3d3d3d;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 4px rgba(155, 89, 182, 0.1);
             height: 400px;
             position: relative;
+            border: 1px solid #9b59b6;
         }
         .overall-experience {
             font-size: 1.5rem;
@@ -45,6 +54,9 @@
             margin: 1rem 0;
             padding: 1rem;
             border-radius: 8px;
+            background-color: #3d3d3d;
+            color: #9b59b6;
+            border: 1px solid #9b59b6;
         }
         .sentiment-score {
             font-size: 1.2rem;
@@ -53,16 +65,19 @@
             margin: 1rem 0;
             padding: 1rem;
             border-radius: 8px;
-            background-color: #e9ecef;
+            background-color: #3d3d3d;
+            color: #ffffff;
+            border: 1px solid #9b59b6;
         }
         .feedback-stats {
             display: flex;
             justify-content: space-around;
             margin: 1rem 0;
             padding: 1rem;
-            background-color: #fff;
+            background-color: #3d3d3d;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 4px rgba(155, 89, 182, 0.1);
+            border: 1px solid #9b59b6;
         }
         .stat-item {
             text-align: center;
@@ -70,9 +85,10 @@
         .stat-value {
             font-size: 1.5rem;
             font-weight: bold;
+            color: #9b59b6;
         }
         .stat-label {
-            color: #6c757d;
+            color: #ffffff;
             font-size: 0.9rem;
         }
         .feedback-list {
@@ -83,6 +99,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
+            color: #ffffff;
         }
         .sentiment-badge {
             padding: 0.5rem 1rem;
@@ -90,16 +107,18 @@
             font-weight: bold;
         }
         .sentiment-positive {
-            background-color: #d4edda;
-            color: #155724;
+            background-color: #4caf50;
+            color: #ffffff;
+            border: 1px solid #69f0ae;
         }
         .sentiment-negative {
-            background-color: #f8d7da;
-            color: #721c24;
+            background-color: #ff5252;
+            color: #ffffff;
+            border: 1px solid #ff867f;
         }
         .sentiment-neutral {
-            background-color: #e9ecef;
-            color: #495057;
+            background-color: #9b59b6;
+            color: #ffffff;
         }
         .filter-buttons {
             display: flex;
@@ -116,22 +135,34 @@
         }
         .filter-button.active {
             transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(155, 89, 182, 0.3);
         }
         .filter-button.all {
-            background-color: #007bff;
-            color: white;
+            background-color: #9b59b6;
+            color: #ffffff;
         }
         .filter-button.positive {
-            background-color: #28a745;
-            color: white;
+            background-color: #4caf50;
+            color: #ffffff;
+            border: 1px solid #69f0ae;
         }
         .filter-button.negative {
-            background-color: #dc3545;
-            color: white;
+            background-color: #ff5252;
+            color: #ffffff;
+            border: 1px solid #ff867f;
         }
         .filter-button.neutral {
-            background-color: #6c757d;
-            color: white;
+            background-color: #9b59b6;
+            color: #ffffff;
+        }
+        .btn-primary {
+            background-color: #9b59b6;
+            border-color: #9b59b6;
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            background-color: #8e44ad;
+            border-color: #8e44ad;
         }
     </style>
 </head>
@@ -319,7 +350,7 @@
                     ],
                     datasets: [{
                         data: [positive, negative, neutral],
-                        backgroundColor: ['#28a745', '#dc3545', '#6c757d'],
+                        backgroundColor: ['#4caf50', '#ff5252', '#9b59b6'],
                         borderWidth: 1
                     }]
                 },
@@ -408,4 +439,4 @@
         });
     </script>
 </body>
-</html> 
+</html>
